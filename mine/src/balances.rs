@@ -2,6 +2,7 @@ use num::{CheckedAdd, CheckedSub, Zero};
 use std::collections::BTreeMap;
 
 pub trait Config: crate::system::Config {
+    /// A denomination type of blockchain's main token
     type Tokens: Zero + CheckedSub + CheckedAdd + Copy;
 }
 
@@ -9,6 +10,7 @@ pub trait Config: crate::system::Config {
 pub struct Pallet<T: Config> {
     balances: BTreeMap<T::AccountID, T::Tokens>,
 }
+
 impl<T: Config> Pallet<T> {
     pub fn new() -> Self {
         Pallet {
@@ -33,7 +35,7 @@ impl<T: Config> Pallet<T> {
         from: &T::AccountID,
         to: &T::AccountID,
         value: T::Tokens,
-    ) -> Result<(), &'static str> {
+    ) -> crate::support::DispatchResult {
         let from_balance = self.get_balance(from);
         let to_balance = self.get_balance(to);
 
@@ -48,6 +50,21 @@ impl<T: Config> Pallet<T> {
         self.set_balance(to, new_to_balance);
 
         Ok(())
+    }
+}
+
+pub enum Call<T: Config> {
+    Transfer { to: T::AccountID, amount: T::Tokens },
+}
+
+impl<T: Config> crate::support::Dispatch for Pallet<T> {
+    type Caller = T::AccountID;
+    type Call = Call<T>;
+
+    fn dispatch(&mut self, caller: T::AccountID, call: Call<T>) -> crate::support::DispatchResult {
+        match call {
+            Call::Transfer { to, amount } => self.transfer(&caller, &to, amount),
+        }
     }
 }
 

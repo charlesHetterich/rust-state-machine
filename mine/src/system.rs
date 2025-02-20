@@ -2,8 +2,13 @@ use num::{One, Zero};
 use std::{collections::BTreeMap, ops::AddAssign};
 
 pub trait Config {
+    /// Address/pointer to on chain data
     type AccountID: Ord + Clone;
+
+    /// Incremental
     type BlockNumber: Zero + One + AddAssign + Copy;
+
+    /// Incremental
     type Nonce: Zero + One + AddAssign;
 }
 
