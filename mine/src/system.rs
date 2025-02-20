@@ -1,37 +1,43 @@
-use std::collections::BTreeMap;
+use num::{One, Zero};
+use std::{collections::BTreeMap, ops::AddAssign};
 
-/// This is the System Pallet.
-/// It handles low level state needed for your blockchain.
-pub struct Pallet {
-    /// The current block number.
-    block_number: u32,
-    /// A map from an account to their nonce.
-    nonce: BTreeMap<String, u32>,
+pub trait Config {
+    type AccountID: Ord + Clone;
+    type BlockNumber: Zero + One + AddAssign + Copy;
+    type Nonce: Zero + One + AddAssign;
 }
 
-impl Pallet {
+#[derive(Debug)]
+/// This is the System Pallet.
+/// It handles low level state needed for your blockchain.
+pub struct Pallet<T: Config> {
+    block_number: T::BlockNumber,
+    nonce: BTreeMap<T::AccountID, T::Nonce>,
+}
+
+impl<T: Config> Pallet<T> {
     /// Create a new instance of the System Pallet.
     pub fn new() -> Self {
         Pallet {
-            block_number: 0,
+            block_number: T::BlockNumber::zero(),
             nonce: BTreeMap::new(),
         }
     }
 
     /// Get current block number
-    pub fn block_number(&self) -> u32 {
+    pub fn block_number(&self) -> T::BlockNumber {
         self.block_number
     }
 
     /// Increment block number by one
     pub fn inc_block_number(&mut self) {
-        self.block_number += 1;
+        self.block_number += T::BlockNumber::one();
     }
 
     // Increment an account's nonce
-    pub fn inc_nonce(&mut self, who: &String) {
-        let nonce = self.nonce.entry(who.clone()).or_insert(0);
-        *nonce += 1;
+    pub fn inc_nonce(&mut self, who: &T::AccountID) {
+        let nonce = self.nonce.entry(who.clone()).or_insert(T::Nonce::zero());
+        *nonce += T::Nonce::one();
     }
 }
 
@@ -39,9 +45,16 @@ impl Pallet {
 mod tests {
     use super::*;
 
+    struct TestConfig;
+    impl Config for TestConfig {
+        type AccountID = String;
+        type BlockNumber = u32;
+        type Nonce = u32;
+    }
+
     #[test]
     fn init_system() {
-        let mut pallet = Pallet::new();
+        let mut pallet = Pallet::<TestConfig>::new();
 
         assert_eq!(pallet.block_number(), 0);
         pallet.inc_block_number();
@@ -50,7 +63,7 @@ mod tests {
 
     #[test]
     fn init_nonce() {
-        let mut pallet = Pallet::new();
+        let mut pallet = Pallet::<TestConfig>::new();
 
         assert_eq!(pallet.nonce.get(&"Alice".to_string()), None);
         pallet.inc_nonce(&"Alice".to_string());

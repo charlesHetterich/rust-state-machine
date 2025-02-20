@@ -1,9 +1,27 @@
 mod balances;
 mod system;
 
+mod types {
+    pub type AccountID = String;
+    pub type Tokens = u128;
+    pub type BlockNumber = u32;
+    pub type Nonce = u32;
+}
+
+// configure our runtime
+
+#[derive(Debug)]
 pub struct Runtime {
-    system: system::Pallet,
-    balances: balances::Pallet,
+    system: system::Pallet<Self>,
+    balances: balances::Pallet<Self>,
+}
+impl system::Config for Runtime {
+    type AccountID = types::AccountID;
+    type BlockNumber = types::BlockNumber;
+    type Nonce = types::Nonce;
+}
+impl balances::Config for Runtime {
+    type Tokens = types::Tokens;
 }
 
 impl Runtime {
@@ -16,6 +34,8 @@ impl Runtime {
         runtime
     }
 }
+
+// use runtime in main logic
 
 const NAMES: [&str; 10] = [
     "Alice", "Bob", "Charlie", "Dave", "Eve", "Ferdie", "Grace", "Hank", "Ivy", "Judy",
@@ -38,14 +58,9 @@ fn main() {
             .balances
             .transfer(&"Alice".to_string(), &to.to_string(), amount)
             .map_err(|e| eprintln!("{}", e));
-        println!(
-            "Block: {}, Alice: {}, {to}: {}",
-            runtime.system.block_number(),
-            runtime.balances.get_balance(&"Alice".to_string()),
-            runtime.balances.get_balance(&to.to_string())
-        );
 
         // sleep 1 second
+        println!("{:#?}", runtime);
         std::thread::sleep(std::time::Duration::from_secs(1));
         idx += 1;
     }
