@@ -15,7 +15,7 @@ pub trait Config: crate::system::Config {
 pub struct Pallet<T: Config> {
     /// A simple storage map from content to the owner of that content.
     /// Accounts can make multiple different claims, but each claim can only have one owner.
-    claims: BTreeMap<T::Content, T::AccountID>,
+    claims: BTreeMap<T::Content, T::AccountId>,
 }
 
 impl<T: Config> Pallet<T> {
@@ -27,13 +27,16 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Get the owner (if any) of a claim.
-    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountID> {
+    pub fn get_claim(&self, claim: &T::Content) -> Option<&T::AccountId> {
         self.claims.get(claim)
     }
+}
 
+#[macros::call]
+impl<T: Config> Pallet<T> {
     /// Create a new claim on behalf of the `caller`.
     /// This function will return an error if someone already has claimed that content.
-    pub fn create_claim(&mut self, caller: T::AccountID, claim: T::Content) -> DispatchResult {
+    pub fn create_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
         // check claim available
         if self.claims.contains_key(&claim) {
             return Err(&"this content is already claimed");
@@ -45,30 +48,13 @@ impl<T: Config> Pallet<T> {
     /// Revoke an existing claim on some content.
     /// This function should only succeed if the caller is the owner of an existing claim.
     /// It will return an error if the claim does not exist, or if the caller is not the owner.
-    pub fn revoke_claim(&mut self, caller: T::AccountID, claim: T::Content) -> DispatchResult {
+    pub fn revoke_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
         let owner = self.get_claim(&claim).ok_or("claim does not exist")?;
         if owner != &caller {
             return Err("caller is not the owner of the claim");
         }
         self.claims.remove(&claim);
         Ok(())
-    }
-}
-
-pub enum Call<T: Config> {
-    CreateClaim(T::Content),
-    RevokeClaim(T::Content),
-}
-
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountID;
-    type Call = Call<T>;
-
-    fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
-        match call {
-            Call::CreateClaim(claim) => self.create_claim(caller, claim),
-            Call::RevokeClaim(claim) => self.revoke_claim(caller, claim),
-        }
     }
 }
 
@@ -81,20 +67,13 @@ mod test {
     }
 
     impl crate::system::Config for TestConfig {
-        type AccountID = &'static str;
+        type AccountId = &'static str;
         type BlockNumber = u32;
         type Nonce = u32;
     }
 
     #[test]
     fn basic_proof_of_existence() {
-        /*
-            TODO:
-            Create an end to end test verifying the basic functionality of this pallet.
-                - Check the initial state is as you expect.
-                - Check that all functions work successfully.
-                - Check that all error conditions error as expected.
-        */
         let mut pallet: super::Pallet<TestConfig> = super::Pallet::<TestConfig>::new();
         assert_eq!(pallet.get_claim(&"hello"), None);
         assert_eq!(pallet.create_claim(&"Alice", "hello"), Ok(()));

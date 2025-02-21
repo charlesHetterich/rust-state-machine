@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, ops::AddAssign};
 
 pub trait Config {
     /// Address/pointer to on chain data
-    type AccountID: Ord + Clone;
+    type AccountId: Ord + Clone;
 
     /// Incremental
     type BlockNumber: Zero + One + AddAssign + Copy;
@@ -17,7 +17,7 @@ pub trait Config {
 /// It handles low level state needed for your blockchain.
 pub struct Pallet<T: Config> {
     block_number: T::BlockNumber,
-    nonce: BTreeMap<T::AccountID, T::Nonce>,
+    nonce: BTreeMap<T::AccountId, T::Nonce>,
 }
 
 impl<T: Config> Pallet<T> {
@@ -40,7 +40,7 @@ impl<T: Config> Pallet<T> {
     }
 
     // Increment an account's nonce
-    pub fn inc_nonce(&mut self, who: &T::AccountID) {
+    pub fn inc_nonce(&mut self, who: &T::AccountId) {
         let nonce = self.nonce.entry(who.clone()).or_insert(T::Nonce::zero());
         *nonce += T::Nonce::one();
     }
@@ -52,7 +52,7 @@ mod tests {
 
     struct TestConfig;
     impl Config for TestConfig {
-        type AccountID = String;
+        type AccountId = String;
         type BlockNumber = u32;
         type Nonce = u32;
     }
