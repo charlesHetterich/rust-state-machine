@@ -17,8 +17,9 @@ mod types {
 }
 
 // configure our runtime
-#[macros::runtime]
+
 #[derive(Debug)]
+#[macros::runtime]
 pub struct Runtime {
     system: system::Pallet<Self>,
     balances: balances::Pallet<Self>,
@@ -35,65 +36,6 @@ impl balances::Config for Runtime {
 impl proof_of_existance::Config for Runtime {
     type Content = &'static str;
 }
-
-// pub enum RuntimeCall {
-//     Balances(balances::Call<Runtime>),
-//     ProofOfExistence(proof_of_existance::Call<Runtime>),
-// }
-
-// impl Runtime {
-//     fn new() -> Self {
-//         Self {
-//             system: system::Pallet::new(),
-//             balances: balances::Pallet::new(),
-//             poe: proof_of_existance::Pallet::new(),
-//         }
-//     }
-
-//     // Execute a block of extrinsics. Increments the block number.
-//     fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
-//         // increment block number
-//         self.system.inc_block_number();
-//         if block.header.block_number != self.system.block_number() {
-//             return Err("Block number mismatch");
-//         }
-
-//         // all extrinsics in block
-//         for (i, types::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
-//             // increment caller's nonce & dispatch extrinsic call
-//             // consumes error with `eprint`
-//             self.system.inc_nonce(&caller);
-//             let _ = self.dispatch(caller, call).map_err(|e| {
-//                 eprintln!(
-//                     "Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
-//                     block.header.block_number, i, e
-//                 )
-//             });
-//         }
-
-//         Ok(())
-//     }
-// }
-
-// impl crate::support::Dispatch for Runtime {
-//     type Caller = <Runtime as system::Config>::AccountId;
-//     type Call = RuntimeCall;
-//     fn dispatch(
-//         &mut self,
-//         caller: Self::Caller,
-//         runtime_call: Self::Call,
-//     ) -> support::DispatchResult {
-//         match runtime_call {
-//             RuntimeCall::Balances(call) => {
-//                 self.balances.dispatch(caller, call)?;
-//             }
-//             RuntimeCall::ProofOfExistence(call) => {
-//                 self.poe.dispatch(caller, call)?;
-//             }
-//         }
-//         Ok(())
-//     }
-// }
 
 // use runtime in main logic
 
